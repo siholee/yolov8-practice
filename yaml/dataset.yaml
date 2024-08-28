@@ -1,0 +1,5 @@
+names:
+- Box
+nc: 1
+train: /Users/yurae/Documents/Coding/yolov8-practice/dataset/images/train
+val: /Users/yurae/Documents/Coding/yolov8-practice/dataset/images/val
