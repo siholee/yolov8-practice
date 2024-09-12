@@ -7,8 +7,9 @@ import matplotlib.pyplot as plt
 # YAML 파일 생성 함수
 def create_yaml_file(dataset_path, output_path, class_names):
     data_yaml = {
-        'train': os.path.join(dataset_path, 'images/train'),
-        'val': os.path.join(dataset_path, 'images/val'),
+        'train': os.path.join(dataset_path, 'train/images'),
+        'val': os.path.join(dataset_path, 'valid/images'),
+        'test': os.path.join(dataset_path, 'test/images'),
         'nc': len(class_names),
         'names': class_names
     }
@@ -21,7 +22,7 @@ def create_yaml_file(dataset_path, output_path, class_names):
 def train_model(data_yaml, epochs=100, img_size=640):
     # YOLOv8 모델 로드 및 학습
     model = YOLO('yolov8n.pt')  # 사전 학습된 모델을 로드
-    results = model.train(data=data_yaml, epochs=epochs, imgsz=img_size)
+    results = model.train(data=data_yaml, epochs=epochs, imgsz=img_size, name="logishub")
     print("Training completed.")
     return model  # 학습된 모델 반환
 
@@ -60,7 +61,7 @@ if __name__ == "__main__":
     # 데이터셋 경로 및 파라미터 설정
     dataset_path = os.path.abspath('dataset')  # 데이터셋 폴더의 절대 경로
     yaml_output_path = os.path.abspath('yaml/dataset.yaml')  # 생성할 YAML 파일 경로
-    class_names = ['Box']  # 클래스 이름 리스트 (여기서는 'Box' 하나만 있음)
+    class_names = ['box']  # 클래스 이름 리스트 (여기서는 'box' 하나만 있음)
     
     # YAML 파일 생성
     create_yaml_file(dataset_path, yaml_output_path, class_names)
