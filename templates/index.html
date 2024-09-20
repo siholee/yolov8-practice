@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Box Detection App</title>
+    <style>
+        /* 페이지 중앙 정렬 및 기본 스타일 설정 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .upload-section input[type="file"] {
+            display: none;
+        }
+
+        .upload-section label {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            border: none;
+        }
+
+        .upload-section label:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-upload {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .btn-upload:hover {
+            background-color: #218838;
+        }
+
+        .result-section {
+            margin-top: 20px;
+        }
+
+        .result-section img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .box-info {
+            text-align: center;
+            font-size: 18px;
+            color: #555;
+        }
+
+        .box-info span {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Upload an Image for Box Detection</h1>
+        <div class="upload-section">
+            <form method="POST" enctype="multipart/form-data">
+                <label for="file-input">파일 선택</label>
+                <input type="file" id="file-input" name="file">
+                <button class="btn-upload" type="submit">Upload Image</button>
+            </form>
+        </div>
+
+        {% if uploaded_image %}
+        <div class="result-section">
+            <h2>Uploaded Image:</h2>
+            <img src="{{ url_for('static', filename='uploads/' + uploaded_image) }}" alt="Uploaded Image">
+            <h2>Detection Result:</h2>
+            <img src="{{ url_for('static', filename='uploads/' + output_image) }}" alt="Detected Image">
+            <div class="box-info">
+                Detected Boxes: <span>{{ detected_boxes }}</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>
