@@ -1,82 +1,58 @@
-import os
-from flask import Flask, render_template, request, redirect, url_for, flash
-from werkzeug.utils import secure_filename
-import cv2
+from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS
 from ultralytics import YOLO
-import matplotlib.pyplot as plt
+from PIL import Image, ImageDraw
+import io
 
-# Flask 설정
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
-app.secret_key = 'supersecretkey'
-model = YOLO('models/logishub.pt')  # YOLO 모델 로드
+CORS(app)
 
-# 허용된 이미지 파일 확장자
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
+# YOLO 모델 로드
+model = YOLO("models/logishub.pt")
 
-# 확장자 확인 함수
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+@app.route('/detect', methods=['POST'])
+def detect_objects():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part in the request'}), 400
 
-# 메인 페이지 라우트
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        # 파일이 제출되었는지 확인
-        if 'file' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
-        
-        file = request.files['file']
-        
-        if file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
-        
-        if file and allowed_file(file.filename):
-            # 파일 저장
-            filename = secure_filename(file.filename)
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
+    file = request.files['file']
 
-            # 파일 경로 확인
-            print(f"Uploaded file path: {filepath}")
-            
-            # 객체 검출 수행
-            image = cv2.imread(filepath)
-            
-            if image is None:
-                flash('Error: Unable to read image')
-                return redirect(request.url)
-            
-            results = model(image)
+    if file.filename == '':
+        return jsonify({'error': 'No file selected for uploading'}), 400
 
-            # 결과 시각화 이미지 생성
-            result_image = results[0].plot()
+    try:
+        # 파일 읽기 및 YOLO 모델로 이미지 처리
+        image = Image.open(io.BytesIO(file.read()))
+        results = model(image)
+        counts = {}
 
-            # BGR -> RGB 변환 (OpenCV와 Matplotlib 호환)
-            result_image_rgb = cv2.cvtColor(result_image, cv2.COLOR_BGR2RGB)
-            
-            # 저장할 파일 경로에 확장자 추가
-            output_image_path = os.path.join(app.config['UPLOAD_FOLDER'], f"output_{filename}")
-            
-            # 파일 확장자를 명확하게 지정 (png 형식으로 저장)
-            if not output_image_path.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
-                output_image_path += '.png'  # 확장자가 없으면 .png 추가
-            
-            # 이미지 저장
-            cv2.imwrite(output_image_path, result_image_rgb)
+        # 이미지를 복사하여 그리기 객체 만들기
+        draw = ImageDraw.Draw(image)
 
-            # 추론된 박스 수 확인
-            detected_boxes = len(results[0].boxes)
+        # 결과를 순회하면서 bounding box와 카운트를 처리
+        for result in results:
+            for box in result.boxes:
+                class_id = int(box.cls[0])
+                class_name = model.names[class_id]
+                counts[class_name] = counts.get(class_name, 0) + 1
 
-            # 결과를 클라이언트에 전달
-            return render_template('index.html', uploaded_image=filename, output_image=os.path.basename(output_image_path), detected_boxes=detected_boxes)
+                # Bounding box 좌표 가져오기
+                x1, y1, x2, y2 = map(int, box.xyxy[0])  # 좌표 변환
+                draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
+                draw.text((x1, y1), f"{class_name} {box.conf[0]:.2f}", fill="red")
 
-    return render_template('index.html')
+        # 결과 이미지 저장
+        image_path = 'detected_image.jpg'
+        image.save(image_path)
 
-# 앱 실행
+        # JSON 응답과 함께 이미지 파일 경로 제공
+        return jsonify({
+            'detections': counts,
+            'image_url': 'http://your-server-url/static/detected_image.jpg'
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
-    if not os.path.exists('static/uploads'):
-        os.makedirs('static/uploads')  # 업로드 폴더가 없으면 생성
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=80)
