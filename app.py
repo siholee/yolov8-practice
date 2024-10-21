@@ -42,13 +42,13 @@ def detect_objects():
                 draw.text((x1, y1), f"{class_name} {box.conf[0]:.2f}", fill="red")
 
         # 결과 이미지 저장
-        image_path = 'detected_image.jpg'
+        image_path = 'static/detected_image.jpg'
         image.save(image_path)
 
         # JSON 응답과 함께 이미지 파일 경로 제공
         return jsonify({
             'detections': counts,
-            'image_url': 'http://your-server-url/static/detected_image.jpg'
+            'image_url': '13.211.211.71/static/detected_image.jpg'
         })
 
     except Exception as e:

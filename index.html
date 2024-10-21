@@ -46,8 +46,9 @@
                 if (data.error) {
                     alert(data.error);
                 } else {
-                    // 이미지 URL과 탐지 결과 표시
-                    document.getElementById('detectedImage').src = data.image_url;
+                    // 이미지 URL에 캐싱 방지용 타임스탬프 추가
+                    const timestamp = new Date().getTime();
+                    document.getElementById('detectedImage').src = data.image_url + '?t=' + timestamp;
                     let counts = "Detected Boxes: " + Object.values(data.detections).reduce((a, b) => a + b, 0);
                     document.getElementById('detectionCounts').innerText = counts;
                     document.getElementById('result').style.display = 'block';
